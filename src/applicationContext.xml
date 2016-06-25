@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:mvc="http://www.springframework.org/schema/mvc" xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:context="http://www.springframework.org/schema/context" xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+						http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+						http://www.springframework.org/schema/mvc
+						http://www.springframework.org/schema/mvc/spring-mvc-3.1.xsd
+						http://www.springframework.org/schema/tx
+ 						http://www.springframework.org/schema/tx/spring-tx-4.0.xsd
+						http://www.springframework.org/schema/context
+						http://www.springframework.org/schema/context/spring-context-3.0.xsd
+						http://www.springframework.org/schema/aop
+						http://www.springframework.org/schema/aop/spring-aop-3.1.xsd"
+	default-lazy-init="true">
+	<mvc:annotation-driven/>
+	<!-- tx:annotation 自动配置事务，注意这个标签必需放在tx:advice下面，否则不起作用 -->
+
+	<!-- 使用组件扫描 -->
+	<!-- 将action扫描出来，在spring容器中进行注册，自动对action在spring容器中进行配置 -->
+	<!-- 使Spring支持自动检测组件，如注解的Controller -->
+	<!-- 注解扫描的包 -->
+	<context:component-scan base-package="cn.edu.xjtu.controller" />
+	<context:component-scan base-package="cn.edu.xjtu.service" />
+	<context:component-scan base-package="cn.edu.xjtu.dao" />
+
+	<!-- 配置义过滤 避免有些延迟加载带来的session不存在 也可以在set端不使用lazy="false"去关闭延迟加载带来的性能损耗 -->
+	<mvc:interceptors>
+		<!-- 开启openSessionInView -->
+		<bean
+			class="org.springframework.orm.hibernate3.support.OpenSessionInViewInterceptor">
+			<property name="sessionFactory" ref="sessionFactory" />
+		</bean>
+	</mvc:interceptors>
+	<!-- <context:annotation-config /> -->
+	<!-- 因此当使用 <context:component-scan/> 后，就可以将 <context:annotation-config/> 
+		移除了。 -->
+	<!-- <mvc:annotation-driven/> 是一种简写形式，可以让初学者快速成应用默认的配置方案， 会默认注册 DefaultAnnotationHandleMapping以及AnnotionMethodHandleAdapter 
+		这两个 Bean, 这两个 Bean ，前者对应类级别， 后者对应到方法级别； 上在面的 DefaultAnnotationHandlerMapping和AnnotationMethodHandlerAdapter 
+		是 Spring 为 @Controller 分发请求所必需的 -->
+
+	<!--注解映射器HandlerMapping -->
+	<!-- <bean class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping" 
+		/> -->
+
+	<!--注解适配器HandlerAdapter -->
+	<!-- <bean class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter"> 
+		</bean> -->
+
+
+	<!-- 视图解析器ViewResolver -->
+	<!-- 解析jsp，默认支持jstl -->
+	<bean
+		class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<property name="viewClass"
+			value="org.springframework.web.servlet.view.JstlView" />
+		<property name="prefix" value="/WEB-INF/jsp/" />
+		<property name="suffix" value=".jsp" />
+	</bean>
+	<mvc:default-servlet-handler />
+
+	<!-- 为了JSON配置 -->
+
+	<!-- 上传文件bean -->
+	<!-- <bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver"> 
+		<property name="defaultEncoding" value="utf-8" /> <property name="maxUploadSize" 
+		value="10485760000" /> <property name="maxInMemorySize" value="40960" /> 
+		</bean> -->
+
+	<!-- 配置数据源 -->
+	<!-- 可以使用的是apache的dbcp 数据源 org.apache.commons.dbcp.BasicDataSource. 也可以使用spring的数据源：org.springframework.jdbc.datasource.DriverManagerDataSource 
+		还可以使用c3p0数据源：class="com.mchange.v2.c3p0.ComboPooledDataSource" -->
+	<!-- 没有连接池作用 -->
+	<!-- <bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource"> 
+		<property name="connection.driver_class" value="com.mysql.jdbc.Driver"/> 
+		<property name="connection.url" value="jdbc:mysql:///happytrip?useUnicode=true&amp;characterEncoding=UTF-8" 
+		/> <property name="connection.username" value="root" /> <property name="connection.password" 
+		value="root" /> </bean> -->
+
+	<bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource"
+		destroy-method="close">
+		<property name="driverClass" value="com.mysql.jdbc.Driver" />
+		<property name="jdbcUrl"
+			value="jdbc:mysql:///happytrip?useUnicode=true&amp;characterEncoding=UTF-8" />
+		<property name="user" value="root" />
+		<property name="password" value="root" />
+		<!-- 连接池启动时的初始值 -->
+		<property name="initialPoolSize" value="5" />
+		<!-- 连接池的最大值 -->
+		<property name="maxPoolSize" value="10" />
+		<!-- 最大空闲值.当经过一个高峰时间后，连接池可以慢慢将已经用不到的连接慢慢释放一部分，一直减少到maxIdle为止 -->
+		<property name="minPoolSize" value="3" />
+		<!-- 最小空闲值.当空闲的连接数少于阀值时，连接池就会预申请去一些连接，以免洪峰来时来不及申请 -->
+		<property name="maxIdleTime" value="600" />
+		<property name="idleConnectionTestPeriod" value="360" />
+		<property name="preferredTestQuery" value="select 1" />
+		<property name="acquireIncrement" value="5" />
+		<property name="acquireRetryAttempts" value="50" />
+		<property name="acquireRetryDelay" value="1000" />
+		<property name="breakAfterAcquireFailure" value="true" />
+		<property name="autoCommitOnClose" value="false" />
+		<property name="testConnectionOnCheckout" value="true" />
+		<property name="maxStatements" value="100" />
+		<property name="maxStatementsPerConnection" value="5" />
+	</bean>
+
+	<!-- 配置hibernate SessionFactory -->
+	<bean id="sessionFactory"
+		class="org.springframework.orm.hibernate3.LocalSessionFactoryBean">
+		<!-- <bean id="sessionFactory" class="org.springframework.orm.hibernate3.annotation.AnnotationSessionFactoryBean"> -->
+		<property name="dataSource" ref="dataSource" />
+		<property name="hibernateProperties">
+			<props>
+				<prop key="hibernate.dialect">org.hibernate.dialect.MySQLDialect</prop>
+				<prop key="hibernate.format_sql">true</prop>
+				<prop key="hibernate.show_sql">true</prop>
+				<!-- <prop key="cache.use_query_cache">true</prop> <prop key="cache.provider_class">org.hibernate.cache.HashtableCacheProvider</prop> 
+					<prop key="cache.provider_class">org.hibernate.cache.EhCacheProvider</prop> -->
+				<prop key="hibernate.generate_statistics">true</prop>
+				<prop key="hibernate.connection.release_mode">
+					auto
+				</prop>
+				<prop key="hibernate.autoReconnect">true</prop>
+			</props>
+		</property>
+		<!-- <property name="mappingResources"> <list> <value>cn/edu/xjtu/pojo/Newscenicspots.hbm.xml</value> 
+			<value>cn/edu/xjtu/pojo/Travelnotes.hbm.xml</value> <value>cn/edu/xjtu/pojo/Travelnotespicture.hbm.xml</value> 
+			<value>cn/edu/xjtu/pojo/User.hbm.xml</value> </list> </property> -->
+		<property name="mappingLocations">
+			<value>classpath*:cn/edu/xjtu/**/*.hbm.xml</value>
+		</property>
+	</bean>
+
+	<!-- 加入openSessionInView 会导致出现session flushmode的错误，可以加入 -->
+	<!-- 配置事务的传播特性 ，指定事务管理器 -->
+	<tx:advice id="txAdvice" transaction-manager="transactionManager">
+		<!-- 配置详细的事务语义 -->
+		<tx:attributes>
+			<!-- methods starting with 'save', 'update' or 'remove' use the default 
+				transaction settings -->
+			<tx:method name="save*" />
+			<tx:method name="update*" />
+			<tx:method name="merge*" />
+			<tx:method name="delete" />
+			<!-- other methods are set to read only -->
+			<tx:method name="*" read-only="true" />
+		</tx:attributes>
+	</tx:advice>
+
+	<!-- 哪些类的哪些方法参与事务 -->
+	<aop:config proxy-target-class="true">
+		<!--配置切入点，匹配××包下所有的类的所有方法的执行 -->
+		<aop:pointcut id="Operation" expression="execution(* cn.edu.xjtu..*DAO.*(..))" />
+		<!-- 指定在txAdvice切入点应用txAdvice事务切面 -->
+		<aop:advisor advice-ref="txAdvice" pointcut-ref="Operation" />
+	</aop:config>
+
+	<tx:annotation-driven />
+
+	<bean id="transactionManager"
+		class="org.springframework.orm.hibernate3.HibernateTransactionManager">
+		<property name="sessionFactory">
+			<ref bean="sessionFactory" />
+		</property>
+	</bean>
+	<!-- 注入sessionFactory -->
+	<bean id="UserDAO" class="cn.edu.xjtu.dao.UserDAO">
+		<property name="sessionFactory">
+			<ref bean="sessionFactory" />
+		</property>
+	</bean>
+	<bean id="NewscenicspotsDAO" class="cn.edu.xjtu.dao.NewscenicspotsDAO">
+		<property name="sessionFactory">
+			<ref bean="sessionFactory" />
+		</property>
+	</bean>
+	<bean id="TravelnotesDAO" class="cn.edu.xjtu.dao.TravelnotesDAO">
+		<property name="sessionFactory">
+			<ref bean="sessionFactory" />
+		</property>
+	</bean>
+	<bean id="TravelnotespictureDAO" class="cn.edu.xjtu.dao.TravelnotespictureDAO">
+		<property name="sessionFactory">
+			<ref bean="sessionFactory" />
+		</property>
+	</bean>
+	<bean id="UserattentionsDAO" class="cn.edu.xjtu.dao.UserattentionsDAO">
+		<property name="sessionFactory">
+			<ref bean="sessionFactory" />
+		</property>
+	</bean>
+	<bean id="StarsDAO" class="cn.edu.xjtu.dao.StarsDAO">
+		<property name="sessionFactory">
+			<ref bean="sessionFactory" />
+		</property>
+	</bean>
+	<bean id="CommentsDAO" class="cn.edu.xjtu.dao.CommentsDAO">
+		<property name="sessionFactory">
+			<ref bean="sessionFactory" />
+		</property>
+	</bean>
+	<bean id="FriendrelationDAO" class="cn.edu.xjtu.dao.FriendrelationDAO">
+		<property name="sessionFactory">
+			<ref bean="sessionFactory" />
+		</property>
+	</bean>
+	<bean id="DetailtravelnotesDAO" class="cn.edu.xjtu.dao.DetailtravelnotesDAO">
+		<property name="sessionFactory">
+			<ref bean="sessionFactory" />
+		</property>
+	</bean>
+</beans>
